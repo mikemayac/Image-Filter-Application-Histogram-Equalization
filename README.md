@@ -1,15 +1,15 @@
-# Aplicación de Filtro de Mosaico con Círculos y Estrellas
+# Aplicación de Ecualización de Histograma
 
-### Recreación de Efectos Artísticos Estilo "Pointillismo"
+### Joel Miguel Maya Castrejón - 417112602
 
-Esta aplicación web, construida con **Python** y **Streamlit**, permite aplicar un **filtro de mosaico** que, en lugar de bloques cuadrados, utiliza **figuras** (círculos o estrellas) para recrear tu imagen con un estilo que recuerda a técnicas de pointillismo o mosaico artístico.
+Esta aplicación web, construida con **Python** y **Streamlit**, permite aplicar **ecualización de histograma** a imágenes, una técnica fundamental en el procesamiento digital de imágenes que mejora el contraste redistribuyendo los valores de intensidad de los píxeles.
 
 El proceso general consiste en:
-1. **Dividir la imagen en celdas** de tamaño fijo.
-2. **Calcular el color promedio** de cada celda.
-3. **Dibujar una figura** (círculo o estrella) con el color promedio en la posición correspondiente.
+1. **Calcular el histograma** de la imagen (distribución de intensidades de píxeles).
+2. **Generar la función de distribución acumulativa (CDF)** del histograma.
+3. **Transformar la imagen** aplicando esta CDF como función de mapeo.
 
-El resultado es un efecto visual muy llamativo, que puede modificarse ajustando el tamaño de las celdas o incluso la forma de las figuras, dando lugar a patrones variados y originales.
+El resultado es una imagen con mejor contraste y distribución de tonos, permitiendo visualizar detalles que pueden estar ocultos en imágenes con bajo contraste o mal expuestas.
 
 ---
 
@@ -18,7 +18,8 @@ El resultado es un efecto visual muy llamativo, que puede modificarse ajustando 
 - Python 3.8 o superior
 - [Streamlit](https://docs.streamlit.io/) para la creación de la interfaz web.
 - [Pillow](https://pillow.readthedocs.io/) (PIL) para la manipulación de imágenes.
-- Math (librería estándar de Python) para cálculos de coordenadas de estrellas.
+- [NumPy](https://numpy.org/) para operaciones numéricas y manejo de arrays.
+- [Matplotlib](https://matplotlib.org/) para la generación de gráficos de histogramas.
 
 En el archivo **requirements.txt** se listan las dependencias necesarias. Asegúrate de instalarlas antes de ejecutar la aplicación.
 
@@ -26,7 +27,7 @@ En el archivo **requirements.txt** se listan las dependencias necesarias. Asegú
 
 ## Instalación
 
-1. [**Clona** este repositorio](https://github.com/mikemayac/Image-Filter-Application-Mosaics) en tu máquina local.
+1. [**Clona** este repositorio](https://github.com/mikemayac/Image-Filter-Application-Histogram-Equalization) en tu máquina local.
 2. Crea y activa un **entorno virtual**:
    ```bash
    python -m venv venv
@@ -42,7 +43,7 @@ En el archivo **requirements.txt** se listan las dependencias necesarias. Asegú
 
 ## Ejecución de la Aplicación
 
-1. Dentro del entorno virtual, ubícate en la carpeta donde se encuentra el archivo principal (por ejemplo, `mosaicos.py`).
+1. Dentro del entorno virtual, ubícate en la carpeta donde se encuentra el archivo principal.
 2. Ejecuta:
    ```bash
    streamlit run ecualizacion_histograma.py
@@ -55,27 +56,40 @@ En el archivo **requirements.txt** se listan las dependencias necesarias. Asegú
 ## Uso de la Aplicación
 
 1. **Sube una imagen** en la barra lateral, en formatos `JPG`, `JPEG` o `PNG`.
-2. Ajusta los parámetros del filtro:
-   - **Tamaño de cada mosaico (cell_size)**: Controla cuán grande es la celda (y por ende el tamaño de los círculos/estrellas).
-   - **Forma del mosaico**: Selecciona entre *Circulos* o *Estrellas*.
-3. **Observa** cómo se muestra la **imagen original** en una columna y la **imagen con el filtro** en la otra.
-4. **Descarga** la imagen filtrada pulsando el botón de descarga situado sobre la imagen resultante.
+2. Opcionalmente, puedes ajustar los parámetros:
+   - **Ecualizar en color (YCbCr)**: Si está marcado, se ecualiza solo el canal de luminancia (Y) manteniendo los componentes de color, resultando en una imagen en color con mejor contraste.
+   - Si no está marcado, se ecualiza la imagen en escala de grises.
+3. **Observa** cómo se muestra la **imagen original** en una columna y la **imagen ecualizada** en la otra.
+4. **Compara los histogramas** original y ecualizado para entender cómo ha cambiado la distribución de intensidades.
+5. **Descarga** la imagen ecualizada pulsando el botón de descarga situado en la parte superior.
 
 ---
 
 ## Algoritmo Implementado
 
-1. **División en celdas**  
-   El programa recorre la imagen en bloques de tamaño fijo (`cell_size`). Para cada bloque, obtendrá el color promedio.
+1. **Cálculo del histograma**  
+   Se cuenta la frecuencia de cada nivel de intensidad (0-255) en la imagen.
    
-2. **Cálculo de color promedio**  
-   Se suman los valores de cada píxel (R, G, B) dentro de la celda y se dividen entre la cantidad de píxeles de la misma.
+2. **Obtención de la CDF (Función de Distribución Acumulada)**  
+   Se calcula la suma acumulativa del histograma, que representa la probabilidad de encontrar un píxel con una intensidad menor o igual a cada nivel.
 
-3. **Dibujo de figuras**  
-   - **Círculos**: Se calcula el centro de cada bloque y se dibuja un círculo con el color promedio.
-   - **Estrellas**: Se genera una lista de coordenadas formando la estrella (cálculo trigonométrico) y se dibuja un polígono con el color promedio.
+3. **Normalización de la CDF**  
+   Se escalan los valores de la CDF al rango [0, 255].
 
-Estas operaciones se realizan sobre una **nueva imagen** en blanco de las mismas dimensiones, donde se agregan las figuras una a una, formando finalmente el mosaico.
+4. **Transformación de la imagen**  
+   Se aplica la CDF normalizada como una función de mapeo para transformar los valores de los píxeles originales.
+
+El proceso completo da como resultado una imagen con una distribución de intensidades más equilibrada, mejorando el contraste global.
+
+---
+
+## Modos de Ecualización
+
+La aplicación permite dos tipos de ecualización:
+
+1. **Escala de grises**: Convierte la imagen a escala de grises y ecualiza directamente los valores de intensidad.
+
+2. **Color (YCbCr)**: Convierte la imagen al espacio de color YCbCr, ecualiza solo el canal Y (luminancia) y mantiene los canales Cb y Cr (crominancia) para preservar los colores originales.
 
 ---
 
@@ -83,12 +97,26 @@ Estas operaciones se realizan sobre una **nueva imagen** en blanco de las mismas
 
 ```bash
 .
-├── ecualizacion_histograma.py                # Código principal de la aplicación (filtro mosaico)
-├── .streamlit/                # Configuraciones extra de Streamlit
+├── ecualizacion_histograma.py # Código principal de la aplicación
+├── .streamlit/               # Configuraciones extra de Streamlit
 │    └── config.toml           
-├── README.md                  # Archivo de documentación (este archivo)
-├── requirements.txt           # Dependencias del proyecto
-└── venv/                      # Entorno virtual (puede variar según tu instalación)
+├── README.md                 # Archivo de documentación (este archivo)
+├── requirements.txt          # Dependencias del proyecto
+└── venv/                     # Entorno virtual (puede variar según tu instalación)
 ```
 
 ---
+
+## Fundamento Teórico
+
+La ecualización de histograma es una técnica que busca obtener una distribución uniforme del histograma de una imagen. Matemáticamente, se puede expresar como:
+
+$s_k = T(r_k) = \sum_{j=0}^{k} \frac{n_j}{n}$
+
+Donde:
+- $s_k$ es el nuevo valor del píxel
+- $r_k$ es el valor original del píxel
+- $n_j$ es el número de píxeles con valor j
+- $n$ es el número total de píxeles
+
+Esta transformación redistribuye los niveles de intensidad para que ocupen todo el rango disponible, mejorando así el contraste global de la imagen.
